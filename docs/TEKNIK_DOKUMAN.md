@@ -2,6 +2,8 @@
 
 Bu doküman, case çalışmasının mantığını, kurallarını, önceliklerini ve anomali tespiti üzerindeki etkilerini açıklar.
 
+**Değerlendirme dönemleri:** Kalibrasyon dönemi ilk 120 gündür (410.601 işlem; çarpanlar ve eşikler yalnızca burada belirlendi), test dönemi son 62 gündür (179.939 işlem; tüm etkiler burada ölçüldü).
+
 ---
 
 ## 1. Genel mimari

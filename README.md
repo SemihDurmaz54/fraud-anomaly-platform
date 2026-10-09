@@ -5,7 +5,7 @@ IEEE-CIS Fraud Detection verisi üzerinde uçtan uca bir prototip: çok katmanl�
 ## Klasör yapısı
 
 ```
-fraud_case/
+fraud-anomaly-platform/
 ├── fraud_case.ipynb          # Adım 1–10: tüm veri işlemleri, değerlendirmeler ve çıkarımlar
 ├── docs/TEKNIK_DOKUMAN.md    # Context kuralları, rule set, öncelikler ve etkileri (teknik doküman)
 ├── config/ 
@@ -33,6 +33,8 @@ fraud_case/
 ## Kurulum
 
 ```bash
+git clone https://github.com/SemihDurmaz54/fraud-anomaly-platform.git
+cd fraud-anomaly-platform
 pip install -r requirements.txt
 ```
 
