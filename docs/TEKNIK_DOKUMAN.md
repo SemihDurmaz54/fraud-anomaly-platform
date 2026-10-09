@@ -1,13 +1,6 @@
 # Teknik Doküman: Context Adjust, Rule Engine, RAG, Agentic AI ve API
 
-Bu doküman, case çalışmasının 6–10. adımlarında tasarlanan bileşenlerin **mantığını, kurallarını, önceliklerini ve anomali tespiti üzerindeki etkilerini** açıklar. Sayısal sonuçlar `fraud_case.ipynb` notebook'unun 6–10. bölümlerinden alınmıştır.
-
-**Değerlendirme kurgusu:**
-
-* **Kalibrasyon dönemi:** ilk 120 gün, 410.601 işlem. Çarpanlar ve eşikler yalnızca bu dönemde belirlendi.
-* **Test dönemi:** son 62 gün, 179.939 işlem. Tüm etkiler bu dönemde ölçüldü.
-* **Alarm:** en yüksek skorlu %2'lik dilim (eşit alarm bütçesi) ya da kalibrasyon döneminde belirlenen sabit eşik.
-* **Etiket kullanımı:** `isFraud` etiketi kurallar çalışırken kullanılmaz. Yalnızca kalibrasyonda ve ölçümde kullanılır.
+Bu doküman, case çalışmasının mantığını, kurallarını, önceliklerini ve anomali tespiti üzerindeki etkilerini açıklar.
 
 ---
 
@@ -245,11 +238,11 @@ Local LLM tercihi bilinçli: işlem verisi kurum dışına çıkmaz (KB-805).
 | ContextAgent | `context_adjust` | — |
 | RuleAgent | `evaluate_rules` | — |
 | KnowledgeAgent | `retrieve_policy`, `reason_transaction` | InvestigatorAgent'tan istek alır |
-| InvestigatorAgent | `investigate` | Politika için KnowledgeAgent'a istek gönderir (2 kez) |
+| InvestigatorAgent | `investigate` | Politika için KnowledgeAgent'a istek gönderir (karar REVIEW/BLOCK ise eskalasyon politikası için ikinci kez) |
 
 * **İletişim:** Tipli mesajlar (`Message`) ve bir `MessageBus` kullanılır. Performative türleri: REQUEST, DELEGATE, RESULT, FAILURE. Tüm mesajlar log'lanır ve konuşma bazında izlenebilir.
 * **Görev devri:** Orkestratör agent adını bilmez. Bus, yetenek kaydından görevi yapabilen agent'ı bulur. Yeni bir agent eklemek için kaydetmek yeterlidir.
-* **İş akışı:** Plan; Ollama varsa LLM ile üretilip kayıtlı yeteneklere göre doğrulanır, yoksa varsayılan plan kullanılır. Düşük riskli ve risk kuralı tetiklenmemiş işlemlerde inceleme adımı atlanır (hızlı yol); LLM maliyeti yalnızca gerekli vakalarda harcanır.
+* **İş akışı:** Plan LLM ile üretilir ve kayıtlı yeteneklere göre doğrulanır; LLM geçersiz bir plan üretirse varsayılan plan (score → context_adjust → evaluate_rules → investigate) kullanılır. Agent akışı Ollama'nın çalışıyor olmasını gerektirir. Düşük riskli ve risk kuralı tetiklenmemiş işlemlerde inceleme adımı atlanır (hızlı yol); LLM maliyeti yalnızca gerekli vakalarda harcanır.
 
 ---
 
@@ -259,9 +252,9 @@ Local LLM tercihi bilinçli: işlem verisi kurum dışına çıkmaz (KB-805).
 
 * **Modüler yapı:** Router'lar konu bazlı ayrılmış (scoring, rules, rag, agents). İstekler Pydantic şemalarıyla doğrulanır. Servis katmanı `Depends` ile enjekte edilir ve testte kolayca değiştirilebilir.
 * **Genişletilebilirlik:** Yeni bir bileşen `FraudService`'e, yeni bir endpoint ise yeni bir router'a eklenir.
-* **Hata yönetimi:** 404 (işlem yok), 422 (geçersiz istek veya kural).
+* **Hata yönetimi:** 404 (işlem yok), 422 (geçersiz istek veya kural), 503 (Ollama'ya ulaşılamıyor veya model yüklü değil; kurulum adımlarıyla birlikte).
 * **İki skorlama modu:** `transaction_id` (batch skorlanmış veri) ve `transaction` (ham kayıt, online skorlama).
-  * Online skorlama, notebook'taki batch mantığının birebir karşılığıdır (`fraudai/scoring.py`). Akış simülasyonunda batch skorla Spearman korelasyonu 0,986.
+  * Online skorlama, notebook'taki batch mantığının karşılığıdır (`fraudai/scoring.py`); fark, `segment_volume_spike` bileşeninin online modda hesaplanmamasıdır (bkz. §7).
   * `update_state=true` ile her işlem kullanıcı durumunu günceller (akış modu).
 
 ---

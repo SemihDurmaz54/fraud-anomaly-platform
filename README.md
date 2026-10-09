@@ -40,7 +40,7 @@ Veri: `train_transaction.csv` ve `train_identity.csv` dosyalarını `data/raw/` 
 
 ## 1) Notebook
 
-`fraud_case.ipynb` dosyasını proje kökünden açıp baştan sona çalıştırın. Notebook, API'nin ihtiyaç duyduğu artefaktları `artifacts/` altına yazar:
+`fraud_case.ipynb` dosyasını proje kökünden açıp baştan sona çalıştırın. Notebook, API'nin ihtiyaç duyduğu çıktı dosyalarını `artifacts/` altına yazar:
 
 * `scoring_bundle.joblib`
 * `entity_state.joblib`
@@ -95,7 +95,7 @@ Ham bir işlem `{"transaction": {...}}` ile gönderilebilir. Zorunlu alanlar: `T
 
 ## 4) Test
 
-Notebook çalıştırılıp artefaktlar üretildikten ve Ollama modelleri indirildikten sonra proje kökünden:
+Notebook çalıştırılıp çıktı dosyaları üretildikten ve Ollama modelleri indirildikten sonra proje kökünden:
 
 ```bash
 python test_platform.py

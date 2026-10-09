@@ -1,7 +1,7 @@
 """Online (tek işlem) anomali skorlama servisi.
 
 Notebook'taki toplu (batch) skorlama mantığının (Adım 3–5) gerçek zamanlı karşılığıdır.
-Notebook'ta üretilen iki artefakt kullanılır:
+Notebook'ta üretilen iki çıktı dosyası kullanılır:
 
 * ``scoring_bundle.joblib``: modeller (Isolation Forest, PCA, ölçekleyiciler), kolon istatistikleri,
   frekans tabloları, katman ağırlıkları ve ECDF referans dağılımları (rank normalizasyonu için).
