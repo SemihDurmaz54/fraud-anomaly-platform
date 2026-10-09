@@ -1,0 +1,13 @@
+# Ham veri (Kaggle'dan indirilir, ~1.3 GB)
+data/raw/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Jupyter / IDE
+.ipynb_checkpoints/
+.idea/
+.vscode/

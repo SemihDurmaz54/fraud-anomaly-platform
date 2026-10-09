@@ -1,0 +1,153 @@
+# Context Adjust Engine kuralları (Adım 6)
+# adjusted_score = clip(raw_anomaly_score × Π factor, 0, 100);  Π factor ∈ [min_factor, max_factor]
+# factor < 1 → skoru düşürür (false positive azaltımı), factor > 1 → skoru artırır (iş açısından kritik risk).
+# Çarpanlar kalibrasyon döneminde (ilk 120 gün) belirlendi, test döneminde (son 62 gün) doğrulandı.
+# Gerekçelerdeki oranlar kalibrasyon dönemine aittir. "Alarm" = ham skoru kalibrasyonun en yüksek %2'sinde olan işlem.
+# Ablasyonda (notebook 6.4) isabeti düşüren kurallar `enabled: false` ile kapatıldı ama dokümantasyon için tutuluyor.
+version: 1
+score_field: raw_anomaly_score
+bounds:
+  min_factor: 0.5
+  max_factor: 1.5
+
+# Türetilmiş bağlam alanları: koşul dili ile tanımlanır, kod değiştirmeden güncellenebilir.
+derived_fields:
+  is_business_hours:        # yerel saat 09–18, hafta içi
+    all:
+      - {field: local_hour, op: between, value: [9, 18]}
+      - {field: is_weekend, op: eq, value: 0}
+  is_off_hours:             # yerel gece 00–05
+    all:
+      - {field: local_hour, op: between, value: [0, 5]}
+  is_trusted_entity:        # yerleşik, tutarlı davranan kullanıcı
+    all:
+      - {field: uid_tx_count_past, op: gte, value: 5}
+      - {field: uid_age_days, op: gte, value: 30}
+      - {field: is_new_device_for_uid, op: eq, value: 0}
+      - {field: is_new_email_for_uid, op: eq, value: 0}
+      - {field: amt_to_uid_avg_past, op: between, value: [0.33, 3.0]}
+  is_frequent_entity:       # sık işlem yapan, eski ve cihazı değişmeyen kullanıcı
+    all:
+      - {field: uid_tx_count_past, op: gte, value: 10}
+      - {field: uid_age_days, op: gte, value: 30}
+      - {field: is_new_device_for_uid, op: eq, value: 0}
+  is_high_value_customer:   # bilinen kullanıcının yüksek tutarlı işlemi veya yüksek ortalamalı müşteri
+    any:
+      - all:
+          - {field: TransactionAmt, op: gt, value: 500}
+          - {field: uid_tx_count_past, op: gte, value: 1}
+      - all:
+          - {field: uid_avg_amount_past, op: gte, value: 300}
+          - {field: amt_to_uid_avg_past, op: lte, value: 2}
+          - {field: uid_tx_count_past, op: gte, value: 3}
+
+rules:
+  # --- Business hours -----------------------------------------------------------------
+  - id: CTX-01
+    category: business_hours
+    name: Mesai saati işlemi
+    condition: {field: is_business_hours, op: eq, value: 1}
+    factor: 0.95
+    rationale: >-
+      Hafta içi 09–18 işlemlerin %45'ini oluşturuyor; bu saatlerdeki alarmların isabeti %13,6
+      (diğer saatlerde %18,8). Etki küçük tutuldu (0,95): 0,85 çarpanı ablasyonda isabeti düşürdü.
+  - id: CTX-02
+    category: business_hours
+    name: Mesai dışı / gece işlemi
+    condition: {field: is_off_hours, op: eq, value: 1}
+    factor: 1.15
+    rationale: >-
+      Yerel gece (00–05) işlemlerin yalnızca %5'i ama fraud oranı %7,8 (ortalamanın ~2 katı);
+      alarm isabeti %25,8. Gece yapılan anormal işlem iş açısından daha kritik.
+
+  # --- Weekend --------------------------------------------------------------------------
+  - id: CTX-03
+    category: weekend
+    name: Hafta sonu perakende alışverişi
+    condition:
+      all:
+        - {field: is_weekend, op: eq, value: 1}
+        - {field: ProductCD, op: in, value: [W, R]}
+    factor: 0.90
+    rationale: >-
+      Hafta sonu W/R (perakende) hacmi doğal olarak artıyor; bu segmentteki alarmların isabeti %8,8
+      (diğerleri %17,5). Sezonsal hacim artışı anomali olarak yorumlanmamalı.
+  - id: CTX-04
+    category: weekend
+    name: Hafta sonu yeni cihaz
+    condition:
+      all:
+        - {field: is_weekend, op: eq, value: 1}
+        - {field: is_new_device_for_uid, op: eq, value: 1}
+    enabled: false   # alarm isabeti yüksek (%22,6) ama artırıcı çarpan listeye düşük skorlu işlemleri taşıyıp isabeti düşürdü
+    factor: 1.10
+    rationale: >-
+      Destek ekiplerinin daha az olduğu hafta sonu, geçmişi olan kullanıcıda ilk kez görülen cihaz
+      hesap ele geçirme (ATO) riskini artırır. Bu sinyal rule engine'de R007 olarak ele alınıyor.
+
+  # --- Trusted / frequent / high value entities ---------------------------------------
+  - id: CTX-05
+    category: trusted_entity
+    name: Güvenilir kullanıcı
+    condition: {field: is_trusted_entity, op: eq, value: 1}
+    factor: 0.75
+    rationale: >-
+      En az 5 geçmiş işlemi, 30+ günlük geçmişi olan, cihaz/e-posta değiştirmeyen ve tutarı kendi
+      ortalamasının 1/3–3 katı aralığında kalan kullanıcı. Alarm isabeti %10,7 (diğerleri %17,0).
+  - id: CTX-06
+    category: trusted_entity
+    name: Sık işlem yapan yerleşik entity
+    condition: {field: is_frequent_entity, op: eq, value: 1}
+    factor: 0.85
+    rationale: >-
+      10+ geçmiş işlem ve 30+ gün geçmiş: yüksek işlem sıklığı bu kullanıcı için normal davranış.
+      Velocity tabanlı istatistiksel alarmları yumuşatır (alarm isabeti %12,8).
+  - id: CTX-07
+    category: high_value_customer
+    name: Yüksek değerli müşteri
+    condition: {field: is_high_value_customer, op: eq, value: 1}
+    factor: 0.80
+    rationale: >-
+      Büyük tutarlar çoğunlukla tanınan müşterilerden geliyor: bu segmentteki alarmların isabeti
+      yalnızca %3,6 (diğerleri %17,7). Tutar tek başına risk değil.
+
+  # --- Transaction-type risk profiles --------------------------------------------------
+  - id: CTX-08
+    category: product_profile
+    name: Düşük riskli ürün profili (R)
+    condition: {field: ProductCD, op: eq, value: R}
+    factor: 0.85
+    rationale: R ürününde alarm isabeti %6,0 (diğer ürünlerde %19,9).
+  - id: CTX-09
+    category: product_profile
+    name: Düşük riskli ürün profili (W)
+    condition: {field: ProductCD, op: eq, value: W}
+    factor: 0.90
+    rationale: W ürününde fraud oranı %2,1 ve alarm isabeti %7,3.
+  - id: CTX-10
+    category: product_profile
+    name: Yüksek riskli ürün profili (C)
+    condition: {field: ProductCD, op: eq, value: C}
+    enabled: false   # C zaten alarmların %56'sını oluşturuyor; artırıcı çarpan kalibrasyonda isabeti düşürdü
+    factor: 1.05
+    rationale: C ürününde fraud oranı %11,2 (ortalamanın 3 katı) ve alarm isabeti %22,7.
+
+  # --- Geographic / identity risk ------------------------------------------------------
+  - id: CTX-11
+    category: geo_risk
+    name: Fatura adresi yok (coğrafya doğrulanamıyor)
+    condition: {field: addr1, op: is_null}
+    factor: 1.05
+    rationale: >-
+      addr1 eksik işlemlerde fraud oranı %11,2 ve alarm isabeti %22,4 (diğerleri %9,8).
+      Coğrafi doğrulama yapılamayan işlemde anomali daha kritik.
+  - id: CTX-12
+    category: account_takeover
+    name: Yerleşik kullanıcıda yeni cihaz
+    condition:
+      all:
+        - {field: is_new_device_for_uid, op: eq, value: 1}
+        - {field: uid_tx_count_past, op: gte, value: 3}
+    enabled: false   # kalibrasyon ablasyonunda isabeti düşürdü; ATO sinyali rule engine'de (R007) ele alınıyor
+    factor: 1.10
+    rationale: Geçmişi olan kullanıcıda ilk kez görülen cihaz; alarm isabeti %20,2.

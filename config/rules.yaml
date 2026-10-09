@@ -1,0 +1,232 @@
+# Business Rule Engine kural seti (Adım 7)
+# Her kural: IF <koşul> THEN <aksiyon>. Öncelik: küçük sayı = önce değerlendirilir / çatışmada kazanır.
+# Aksiyonlar: BLOCK (4) > REVIEW (3) > FLAG (2, karar vermez, yalnızca skoru ayarlar) > ALLOW (1, beyaz liste)
+version: 1
+settings:
+  conflict_resolution: priority
+  score_field: adjusted_score
+  max_total_delta: 30
+  review_threshold: 95
+rules:
+- id: R001
+  name: Gece + yüksek tutar + doğrulanamayan cihaz/adres
+  priority: 1
+  tags:
+  - account_takeover
+  - high_amount
+  - night
+  if:
+    all:
+    - field: TransactionAmt
+      op: gt
+      value: 200
+    - field: is_off_hours
+      op: eq
+      value: 1
+    - any:
+      - field: is_new_device_for_uid
+        op: eq
+        value: 1
+      - field: addr1
+        op: is_null
+  then:
+    action: BLOCK
+    score_delta: 25
+    reason: Gece {local_hour}:00'da {TransactionAmt:.0f} USD; yeni cihaz={is_new_device_for_uid}, adres={addr1}
+- id: R002
+  name: Yeni hesapta velocity burst
+  priority: 20
+  tags:
+  - velocity
+  if:
+    all:
+    - field: uid_tx_last_1h
+      op: gte
+      value: 5
+    - field: uid_age_days
+      op: lt
+      value: 1
+  then:
+    action: REVIEW
+    score_delta: 10
+    reason: Bir günden yeni kullanıcı son 1 saatte {uid_tx_last_1h} işlem yaptı (eşik 5)
+- id: R003
+  name: Card testing (küçük tutarlı ardışık denemeler)
+  priority: 15
+  tags:
+  - card_testing
+  - velocity
+  if:
+    all:
+    - field: TransactionAmt
+      op: lt
+      value: 10
+    - field: uid_tx_last_1h
+      op: gte
+      value: 3
+  then:
+    action: REVIEW
+    score_delta: 15
+    reason: '{TransactionAmt:.2f} USD''lik küçük işlem; son 1 saatte {uid_tx_last_1h} işlem'
+- id: R004
+  name: Kullanıcıya göre tutar sıçraması
+  priority: 30
+  tags:
+  - amount
+  - behavior
+  if:
+    all:
+    - field: amt_to_uid_avg_past
+      op: gte
+      value: 5
+    - field: uid_tx_count_past
+      op: gte
+      value: 3
+  then:
+    action: FLAG
+    score_delta: 5
+    reason: Tutar kullanıcının geçmiş ortalamasının {amt_to_uid_avg_past:.1f} katı
+- id: R005
+  name: Yeni kartla yüksek tutar (online kimlikli)
+  priority: 35
+  tags:
+  - new_card
+  - high_amount
+  if:
+    all:
+    - field: card_age_days
+      op: lte
+      value: 1
+    - field: TransactionAmt
+      op: gte
+      value: 500
+    - field: has_identity
+      op: eq
+      value: 1
+  then:
+    action: REVIEW
+    score_delta: 10
+    reason: Kart {card_age_days:.0f} günlük, tutar {TransactionAmt:.0f} USD
+- id: R006
+  name: Yeni kullanıcıdan çok yüksek tutar
+  priority: 12
+  tags:
+  - high_amount
+  - new_entity
+  if:
+    all:
+    - field: TransactionAmt
+      op: gt
+      value: 2000
+    - field: uid_tx_count_past
+      op: eq
+      value: 0
+  then:
+    action: FLAG
+    score_delta: 5
+    reason: Geçmişi olmayan kullanıcıdan {TransactionAmt:.0f} USD
+- id: R007
+  name: Gece yeni cihaz (hesap ele geçirme)
+  priority: 10
+  tags:
+  - account_takeover
+  if:
+    all:
+    - field: is_new_device_for_uid
+      op: eq
+      value: 1
+    - field: is_off_hours
+      op: eq
+      value: 1
+  then:
+    action: REVIEW
+    score_delta: 15
+    reason: Kullanıcı ({uid_tx_count_past} geçmiş işlem) yerel saat {local_hour}:00'da ilk kez yeni bir cihaz kullandı
+- id: R008
+  name: Çoklu cihaz kullanımı
+  priority: 60
+  tags:
+  - device
+  if:
+    field: uid_n_devices_past
+    op: gte
+    value: 5
+  then:
+    action: FLAG
+    score_delta: 3
+    reason: Kullanıcı şimdiye kadar {uid_n_devices_past} farklı cihaz kullandı
+- id: R009
+  name: Çoklu e-posta kullanımı
+  priority: 61
+  tags:
+  - email
+  if:
+    field: uid_n_emails_past
+    op: gte
+    value: 3
+  then:
+    action: FLAG
+    score_delta: 3
+    reason: Kullanıcı şimdiye kadar {uid_n_emails_past} farklı e-posta alan adı kullandı
+- id: R010
+  name: Alıcı/ödeyen e-posta uyumsuzluğu
+  priority: 62
+  tags:
+  - email
+  if:
+    field: email_match
+    op: eq
+    value: 0
+  then:
+    action: FLAG
+    score_delta: 2
+    reason: Ödeyen ({P_emaildomain}) ve alıcı ({R_emaildomain}) e-posta alan adları farklı
+- id: R011
+  name: Coğrafi doğrulama yok
+  priority: 63
+  tags:
+  - geo
+  if:
+    all:
+    - field: addr1
+      op: is_null
+    - field: dist1
+      op: is_null
+  then:
+    action: FLAG
+    score_delta: 3
+    reason: Fatura adresi ve mesafe bilgisi yok; coğrafi doğrulama yapılamıyor
+- id: R012
+  name: AI yüksek risk
+  priority: 50
+  tags:
+  - ai
+  if:
+    field: adjusted_score
+    op: gte
+    value: 95
+  then:
+    action: REVIEW
+    score_delta: 0
+    reason: Context-adjusted anomali skoru {adjusted_score:.1f} (≥ 95)
+- id: R013
+  name: Güvenilir müşteri beyaz listesi
+  priority: 5
+  tags:
+  - whitelist
+  - trusted
+  if:
+    all:
+    - field: is_trusted_entity
+      op: eq
+      value: 1
+    - field: adjusted_score
+      op: lt
+      value: 80
+    - field: uid_tx_last_1h
+      op: lt
+      value: 5
+  then:
+    action: ALLOW
+    score_delta: -10
+    reason: Güvenilir müşteri ({uid_tx_count_past} geçmiş işlem, {uid_age_days:.0f} gün), skor {adjusted_score:.1f} < 80

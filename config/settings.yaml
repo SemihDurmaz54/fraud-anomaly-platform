@@ -1,0 +1,24 @@
+# Platform ayarları (API, agent'lar ve RAG pipeline tarafından kullanılır)
+paths:
+  artifacts_dir: artifacts                 # notebook çıktıları
+  scoring_bundle: artifacts/scoring_bundle.joblib
+  entity_state: artifacts/entity_state.joblib
+  tx_context: artifacts/tx_context.parquet # batch skorlanmış işlemler (TransactionID ile sorgu)
+  context_rules: config/context_rules.yaml
+  rules: config/rules.yaml
+  knowledge_base: knowledge_base
+  rag_index: artifacts/rag_index
+
+llm:
+  model: qwen2.5:3b        # `ollama pull qwen2.5:3b`
+  host: http://localhost:11434
+
+embeddings:
+  model: bge-m3            # `ollama pull bge-m3`
+
+rag:
+  top_k: 4
+
+risk_levels:               # context-adjusted skora göre risk seviyesi
+  high: 90
+  medium: 75

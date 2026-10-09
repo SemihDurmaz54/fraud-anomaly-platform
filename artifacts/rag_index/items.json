@@ -1,0 +1,319 @@
+[
+ {
+  "chunk_id": "01_genel_fraud_politikasi#0",
+  "doc_id": "01_genel_fraud_politikasi",
+  "title": "Genel Fraud Önleme Politikası",
+  "section": "Amaç ve kapsam",
+  "part": 0,
+  "rule_ids": [],
+  "text": "Genel Fraud Önleme Politikası › Amaç ve kapsam\nBu politika, kartlı online ödemelerde fraud ve anomali tespitinin nasıl yapılacağını tanımlar. Tüm işlemler gerçek zamanlı olarak üç katmandan geçer: AI tabanlı anomali skoru, bağlama göre skor düzeltme (context adjust) ve iş kuralları (rule engine). Nihai karar APPROVE, REVIEW veya BLOCK olabilir."
+ },
+ {
+  "chunk_id": "01_genel_fraud_politikasi#1",
+  "doc_id": "01_genel_fraud_politikasi",
+  "title": "Genel Fraud Önleme Politikası",
+  "section": "Karar kategorileri",
+  "part": 0,
+  "rule_ids": [
+   "KB-101",
+   "KB-102",
+   "KB-103"
+  ],
+  "text": "Genel Fraud Önleme Politikası › Karar kategorileri\nKB-101: APPROVE kararı verilen işlemler otomatik onaylanır ve yalnızca denetim kaydına yazılır.\n\nKB-102: REVIEW kararı verilen işlemler manuel inceleme kuyruğuna alınır. İnceleme en geç 2 saat içinde tamamlanmalıdır. Bu süre içinde işlem askıda (pending) bekletilir.\n\nKB-103: BLOCK kararı verilen işlemler reddedilir. Kart sahibine SMS ile bilgi verilir ve kart, kart sahibi doğrulama yapana kadar 24 saat geçici blokede tutulur."
+ },
+ {
+  "chunk_id": "01_genel_fraud_politikasi#2",
+  "doc_id": "01_genel_fraud_politikasi",
+  "title": "Genel Fraud Önleme Politikası",
+  "section": "Risk skoru eşikleri",
+  "part": 0,
+  "rule_ids": [
+   "KB-104",
+   "KB-105",
+   "R012"
+  ],
+  "text": "Genel Fraud Önleme Politikası › Risk skoru eşikleri\nKB-104: Context-adjusted anomali skoru 95 ve üzerindeki işlemler, hiçbir iş kuralı tetiklenmese bile REVIEW kuyruğuna alınır (bkz. rule engine R012).\n\nKB-105: Nihai risk skoru (anomali skoru + kural katkıları) 0–100 aralığındadır. Kuralların skora toplam katkısı ±30 puanla sınırlıdır; böylece tek bir kural grubu AI değerlendirmesini tamamen geçersiz kılamaz."
+ },
+ {
+  "chunk_id": "01_genel_fraud_politikasi#3",
+  "doc_id": "01_genel_fraud_politikasi",
+  "title": "Genel Fraud Önleme Politikası",
+  "section": "Kural önceliği ve çatışma çözümü",
+  "part": 0,
+  "rule_ids": [
+   "KB-106",
+   "KB-107"
+  ],
+  "text": "Genel Fraud Önleme Politikası › Kural önceliği ve çatışma çözümü\nKB-106: Birden fazla kural aynı anda tetiklendiğinde öncelik numarası en küçük olan kural kararı belirler. BLOCK kuralları (öncelik 1) her zaman beyaz liste kurallarından önce gelir. Beyaz liste (ALLOW) kuralları ise REVIEW kurallarını geçersiz kılabilir.\n\nKB-107: Geçersiz kılınan kurallar karar gerekçesinde mutlaka listelenir. Analist, geçersiz kılınan bir REVIEW kuralını gerekçe göstererek yeniden aktive edebilir."
+ },
+ {
+  "chunk_id": "02_velocity_ve_card_testing#0",
+  "doc_id": "02_velocity_ve_card_testing",
+  "title": "Velocity ve Card Testing Politikası",
+  "section": "Velocity tanımı",
+  "part": 0,
+  "rule_ids": [],
+  "text": "Velocity ve Card Testing Politikası › Velocity tanımı\nVelocity, bir kullanıcının (uid: kart + adres + kartın ilk kullanım günü) belirli bir zaman penceresindeki işlem sayısıdır. Ani yoğunlaşmalar (burst), çalıntı kart bilgilerinin hızla harcanmaya çalışıldığını gösterebilir."
+ },
+ {
+  "chunk_id": "02_velocity_ve_card_testing#1",
+  "doc_id": "02_velocity_ve_card_testing",
+  "title": "Velocity ve Card Testing Politikası",
+  "section": "Velocity kuralları",
+  "part": 0,
+  "rule_ids": [
+   "CTX-06",
+   "KB-201",
+   "KB-202",
+   "KB-203",
+   "R002"
+  ],
+  "text": "Velocity ve Card Testing Politikası › Velocity kuralları\nKB-201: Hesabı bir günden yeni olan bir kullanıcı son 1 saat içinde 5 veya daha fazla işlem yaparsa işlem REVIEW kuyruğuna alınır (rule engine R002).\n\nKB-202: Yerleşik ve sık işlem yapan kullanıcılarda (10+ geçmiş işlem, 30+ gün) yüksek işlem sıklığı normal davranış kabul edilir. Bu kullanıcılar için velocity eşiği uygulanmaz; anomali skoru context kuralı CTX-06 ile 0,85 çarpanıyla düşürülür.\n\nKB-203: Velocity nedeniyle REVIEW'a düşen işlemde analist, son 24 saatteki tüm işlemlerin aynı cihazdan yapılıp yapılmadığını kontrol eder. Farklı cihazlardan gelen eşzamanlı işlemler BLOCK gerekçesidir."
+ },
+ {
+  "chunk_id": "02_velocity_ve_card_testing#2",
+  "doc_id": "02_velocity_ve_card_testing",
+  "title": "Velocity ve Card Testing Politikası",
+  "section": "Card testing",
+  "part": 0,
+  "rule_ids": [
+   "KB-204",
+   "KB-205",
+   "KB-217",
+   "R003"
+  ],
+  "text": "Velocity ve Card Testing Politikası › Card testing\nCard testing, dolandırıcıların çalıntı kart bilgisinin geçerli olup olmadığını küçük tutarlı işlemlerle denemesidir. Başarılı denemeyi genellikle yüksek tutarlı bir işlem izler.\n\nKB-204: 10 USD'nin altındaki bir işlem, aynı kullanıcının son 1 saatteki 3 veya daha fazla işleminden biri ise card testing şüphesiyle REVIEW kuyruğuna alınır (rule engine R003).\n\nKB-205: Card testing şüphesi doğrulanırsa kart kalıcı olarak bloke edilir ve aynı kart grubunda (card1) son 24 saatte işlem yapan diğer kullanıcılar da incelemeye alınır.\n\nKB-217: (Deneme kuralı) C ürününde, kredi kartı ile ve outlook.com uzantılı e-posta adresinden yapılan ardışık küçük işlemler, card testing ihtimaline karşı 2 saat bekletilir ve ardından tek seferde değerlendirilir."
+ },
+ {
+  "chunk_id": "03_hesap_ele_gecirme#0",
+  "doc_id": "03_hesap_ele_gecirme",
+  "title": "Hesap Ele Geçirme (Account Takeover) Politikası",
+  "section": "Belirtiler",
+  "part": 0,
+  "rule_ids": [],
+  "text": "Hesap Ele Geçirme (Account Takeover) Politikası › Belirtiler\nHesap ele geçirmede (ATO) dolandırıcı, gerçek kullanıcının kart veya hesap bilgilerini kendi cihazından kullanır. Tipik belirtiler: geçmişi olan kullanıcıda ilk kez görülen cihaz, yeni e-posta adresi, olağandışı saat ve kullanıcının alışık olmadığı yüksek tutar."
+ },
+ {
+  "chunk_id": "03_hesap_ele_gecirme#1",
+  "doc_id": "03_hesap_ele_gecirme",
+  "title": "Hesap Ele Geçirme (Account Takeover) Politikası",
+  "section": "Kurallar",
+  "part": 0,
+  "rule_ids": [
+   "KB-301",
+   "KB-302",
+   "KB-303",
+   "KB-304",
+   "R001",
+   "R007",
+   "R008",
+   "R009"
+  ],
+  "text": "Hesap Ele Geçirme (Account Takeover) Politikası › Kurallar\nKB-301: Yerleşik bir kullanıcı yerel saatle 00:00–05:59 arasında ilk kez yeni bir cihaz kullanırsa işlem REVIEW kuyruğuna alınır (rule engine R007).\n\nKB-302: Gece saatinde (00:00–05:59), 200 USD üzerinde ve yeni cihazdan veya fatura adresi olmadan yapılan işlemler BLOCK edilir (rule engine R001). Bu kural en yüksek önceliğe sahiptir ve beyaz liste kuralları tarafından geçersiz kılınamaz.\n\nKB-303: Kullanıcının şimdiye kadar 5 veya daha fazla farklı cihaz kullanması tek başına karar sebebi değildir. Ancak risk skoruna +3 puan eklenir (R008) ve inceleme notuna yazılır.\n\nKB-304: Kullanıcının şimdiye kadar 3 veya daha fazla farklı e-posta alan adı kullanması kimlik karışıklığı veya sentetik kimlik işaretidir; risk skoruna +3 puan eklenir (R009)."
+ },
+ {
+  "chunk_id": "03_hesap_ele_gecirme#2",
+  "doc_id": "03_hesap_ele_gecirme",
+  "title": "Hesap Ele Geçirme (Account Takeover) Politikası",
+  "section": "Analist adımları",
+  "part": 0,
+  "rule_ids": [
+   "KB-305"
+  ],
+  "text": "Hesap Ele Geçirme (Account Takeover) Politikası › Analist adımları\nKB-305: ATO şüphesiyle incelenen işlemde analist (1) cihazın daha önce başka kullanıcılarca kullanılıp kullanılmadığını, (2) e-posta değişikliğinin işlemden önceki 24 saatte yapılıp yapılmadığını, (3) teslimat adresinin değişip değişmediğini kontrol eder. İki veya daha fazla madde doğrulanırsa işlem BLOCK edilir ve kart sahibi aranır."
+ },
+ {
+  "chunk_id": "04_guvenilir_musteri#0",
+  "doc_id": "04_guvenilir_musteri",
+  "title": "Güvenilir Müşteri ve Beyaz Liste Politikası",
+  "section": "Güvenilir müşteri tanımı",
+  "part": 0,
+  "rule_ids": [
+   "CTX-05",
+   "KB-401",
+   "KB-402"
+  ],
+  "text": "Güvenilir Müşteri ve Beyaz Liste Politikası › Güvenilir müşteri tanımı\nKB-401: Bir kullanıcı şu koşulların tamamını sağlıyorsa güvenilir müşteri kabul edilir: en az 5 geçmiş işlem, en az 30 günlük geçmiş, işlemde yeni cihaz veya yeni e-posta kullanılmaması ve işlem tutarının kullanıcının geçmiş ortalamasının 1/3 ile 3 katı arasında olması.\n\nKB-402: Güvenilir müşterinin anomali skoru context kuralı CTX-05 ile 0,75 çarpanıyla düşürülür. Gerekçe: geçmişte tutarlı davranan müşterilerde istatistiksel sapmaların büyük çoğunluğu meşru işlemlerdir (alarm isabeti %10,7; diğer kullanıcılarda %17)."
+ },
+ {
+  "chunk_id": "04_guvenilir_musteri#1",
+  "doc_id": "04_guvenilir_musteri",
+  "title": "Güvenilir Müşteri ve Beyaz Liste Politikası",
+  "section": "Beyaz liste",
+  "part": 0,
+  "rule_ids": [
+   "KB-302",
+   "KB-403",
+   "KB-404",
+   "KB-405",
+   "R001",
+   "R013"
+  ],
+  "text": "Güvenilir Müşteri ve Beyaz Liste Politikası › Beyaz liste\nKB-403: Güvenilir müşterinin context-adjusted skoru 80'in altındaysa ve son 1 saatte 5'ten az işlemi varsa işlem beyaz liste kuralıyla (R013) otomatik onaylanır. Beyaz liste, REVIEW kurallarını geçersiz kılar.\n\nKB-404: Beyaz liste hiçbir koşulda BLOCK kurallarını (KB-302 / R001) geçersiz kılamaz.\n\nKB-405: Beyaz listedeki bir müşteri için chargeback (ters ibraz) bildirilirse müşteri 90 gün boyunca beyaz listeden çıkarılır."
+ },
+ {
+  "chunk_id": "04_guvenilir_musteri#2",
+  "doc_id": "04_guvenilir_musteri",
+  "title": "Güvenilir Müşteri ve Beyaz Liste Politikası",
+  "section": "Yüksek değerli müşteriler",
+  "part": 0,
+  "rule_ids": [
+   "CTX-07",
+   "KB-406",
+   "KB-407"
+  ],
+  "text": "Güvenilir Müşteri ve Beyaz Liste Politikası › Yüksek değerli müşteriler\nKB-406: Bilinen bir kullanıcının 500 USD üzerindeki işlemleri veya geçmiş ortalaması 300 USD'nin üzerinde olan müşterilerin tutarlı işlemleri yüksek değerli müşteri işlemidir. Bu işlemlerin skoru CTX-07 ile 0,80 çarpanıyla düşürülür. Tutar tek başına risk göstergesi değildir; geçmiş verilerde bu segmentteki alarmların yalnızca %3,6'sı gerçek fraud çıkmıştır.\n\nKB-407: (Deneme kuralı) Yüksek değerli müşterilerde REVIEW kararı verilirse inceleme 30 dakika içinde tamamlanmalıdır (öncelikli kuyruk)."
+ },
+ {
+  "chunk_id": "05_urun_ve_zaman_profilleri#0",
+  "doc_id": "05_urun_ve_zaman_profilleri",
+  "title": "Ürün ve Zaman Bazlı Risk Profilleri",
+  "section": "Ürün (ProductCD) risk profilleri",
+  "part": 0,
+  "rule_ids": [
+   "CTX-08",
+   "CTX-09",
+   "KB-501",
+   "KB-502",
+   "KB-503",
+   "KB-504"
+  ],
+  "text": "Ürün ve Zaman Bazlı Risk Profilleri › Ürün (ProductCD) risk profilleri\nKB-501: W ürünü düşük riskli perakende ürünüdür (tarihsel fraud oranı yaklaşık %2). Bu üründe anomali skoru CTX-09 ile 0,90 çarpanıyla düşürülür.\n\nKB-502: R ürünü düşük riskli kabul edilir (alarm isabeti yaklaşık %6). Skor CTX-08 ile 0,85 çarpanıyla düşürülür.\n\nKB-503: C ürünü yüksek riskli üründür (tarihsel fraud oranı yaklaşık %11, ortalamanın 3 katı). C ürünündeki REVIEW işlemleri kuyruğun başına alınır.\n\nKB-504: (Deneme kuralı) C ürününde aynı gün içinde 3'ten fazla farklı kartla işlem yapan cihazlar 7 gün süreyle izleme listesine alınır."
+ },
+ {
+  "chunk_id": "05_urun_ve_zaman_profilleri#1",
+  "doc_id": "05_urun_ve_zaman_profilleri",
+  "title": "Ürün ve Zaman Bazlı Risk Profilleri",
+  "section": "Mesai saatleri",
+  "part": 0,
+  "rule_ids": [
+   "CTX-01",
+   "CTX-02",
+   "KB-505",
+   "KB-506"
+  ],
+  "text": "Ürün ve Zaman Bazlı Risk Profilleri › Mesai saatleri\nKB-505: Yerel saatle hafta içi 09:00–18:00 arası mesai saatidir. Bu saatlerde işlem hacmi yüksektir, fraud ekibi tam kadro çalışır ve alarmların isabeti düşüktür. Bu nedenle mesai saatindeki işlemlerin skoru CTX-01 ile 0,95 çarpanıyla hafifçe düşürülür.\n\nKB-506: Yerel saatle 00:00–05:59 arası mesai dışıdır. Bu saatlerde fraud oranı ortalamanın yaklaşık 2 katıdır (%7,8). Skor CTX-02 ile 1,15 çarpanıyla artırılır."
+ },
+ {
+  "chunk_id": "05_urun_ve_zaman_profilleri#2",
+  "doc_id": "05_urun_ve_zaman_profilleri",
+  "title": "Ürün ve Zaman Bazlı Risk Profilleri",
+  "section": "Hafta sonu",
+  "part": 0,
+  "rule_ids": [
+   "CTX-03",
+   "KB-507",
+   "KB-508"
+  ],
+  "text": "Ürün ve Zaman Bazlı Risk Profilleri › Hafta sonu\nKB-507: Hafta sonu W ve R ürünlerinde perakende alışveriş hacmi doğal olarak artar. Bu artış anomali sayılmaz ve skor CTX-03 ile 0,90 çarpanıyla düşürülür.\n\nKB-508: Hafta sonu REVIEW kuyruğu nöbetçi ekip tarafından yönetilir. Nöbetçi ekip yalnızca BLOCK ve 95 üzeri skorlu REVIEW işlemlerini aynı gün inceler; diğerleri pazartesi sabahı incelenir ve bu süre boyunca askıda kalmaz, onaylanır."
+ },
+ {
+  "chunk_id": "06_cografi_ve_kimlik_riski#0",
+  "doc_id": "06_cografi_ve_kimlik_riski",
+  "title": "Coğrafi Risk ve Kimlik Doğrulama Politikası",
+  "section": "Coğrafi doğrulama",
+  "part": 0,
+  "rule_ids": [
+   "KB-302",
+   "KB-601",
+   "KB-602",
+   "R011"
+  ],
+  "text": "Coğrafi Risk ve Kimlik Doğrulama Politikası › Coğrafi doğrulama\nKB-601: Fatura adresi (addr1) ve mesafe (dist1) bilgisi olmayan işlemlerde coğrafi doğrulama yapılamaz. Bu işlemlerin risk skoruna +3 puan eklenir (rule engine R011). Tarihsel verilerde adresi olmayan işlemlerin fraud oranı yaklaşık %11'dir.\n\nKB-602: (Deneme kuralı) Fatura adresi olmayan ve gece saatinde yapılan 200 USD üzeri işlemler, yabancı ülke işlemi gibi değerlendirilir ve BLOCK kuralı KB-302 kapsamına girer."
+ },
+ {
+  "chunk_id": "06_cografi_ve_kimlik_riski#1",
+  "doc_id": "06_cografi_ve_kimlik_riski",
+  "title": "Coğrafi Risk ve Kimlik Doğrulama Politikası",
+  "section": "E-posta tutarlılığı",
+  "part": 0,
+  "rule_ids": [
+   "KB-603",
+   "KB-604",
+   "R010"
+  ],
+  "text": "Coğrafi Risk ve Kimlik Doğrulama Politikası › E-posta tutarlılığı\nKB-603: Ödeyen (P_emaildomain) ve alıcı (R_emaildomain) e-posta alan adlarının farklı olması tek başına fraud göstergesi değildir; hediye ve üçüncü kişi adına yapılan alımlarda yaygındır. Risk skoruna +2 puan eklenir (R010).\n\nKB-604: Anonim e-posta servislerinden (ör. anonymous.com, protonmail.com) yapılan işlemlerde ek kimlik doğrulama (3DS) istenebilir. Ancak geçmiş verilerde bu işlemlerin alarm isabeti düşüktür (%5); bu yüzden otomatik REVIEW kuralı tanımlanmamıştır."
+ },
+ {
+  "chunk_id": "06_cografi_ve_kimlik_riski#2",
+  "doc_id": "06_cografi_ve_kimlik_riski",
+  "title": "Coğrafi Risk ve Kimlik Doğrulama Politikası",
+  "section": "Yeni kart ve yeni kullanıcı",
+  "part": 0,
+  "rule_ids": [
+   "KB-605",
+   "KB-606",
+   "KB-607",
+   "R004",
+   "R005",
+   "R006"
+  ],
+  "text": "Coğrafi Risk ve Kimlik Doğrulama Politikası › Yeni kart ve yeni kullanıcı\nKB-605: İlk kullanımından bu yana en fazla 1 gün geçmiş bir kartla, online kimlik bilgisi olan (cihaz verisi gelen) ve 500 USD veya üzerinde yapılan işlemler REVIEW kuyruğuna alınır (rule engine R005).\n\nKB-606: Hiç geçmişi olmayan bir kullanıcıdan gelen 2000 USD üzerindeki işlemlerin risk skoruna +5 puan eklenir (R006). Bu kural tek başına karar vermez, çünkü yeni müşterilerin büyük alımları çoğunlukla meşrudur.\n\nKB-607: Kullanıcının geçmiş ortalamasının 5 katı veya üzerindeki tutarlar (en az 3 geçmiş işlem varsa) risk skoruna +5 puan ekler (R004)."
+ },
+ {
+  "chunk_id": "07_inceleme_ve_eskalasyon#0",
+  "doc_id": "07_inceleme_ve_eskalasyon",
+  "title": "İnceleme ve Eskalasyon Prosedürü",
+  "section": "REVIEW kuyruğu",
+  "part": 0,
+  "rule_ids": [
+   "KB-407",
+   "KB-503",
+   "KB-701",
+   "KB-702",
+   "KB-703"
+  ],
+  "text": "İnceleme ve Eskalasyon Prosedürü › REVIEW kuyruğu\nKB-701: REVIEW kararı verilen her işlem için analist ekranında şunlar gösterilir: nihai risk skoru, dört AI katmanının (column, multivariate, entity, temporal) skorları ve gerekçeleri, uygulanan context kuralları, tetiklenen ve geçersiz kılınan iş kuralları ve ilgili politika maddeleri.\n\nKB-702: Analist işlemi inceledikten sonra üç karardan birini verir: onay, red (BLOCK) veya kart sahibiyle doğrulama (step-up). Her karar gerekçesiyle birlikte kaydedilir ve modelin geri bildirim verisine eklenir.\n\nKB-703: Kuyruktaki işlemler önceliğe göre sıralanır: önce BLOCK önerisi olanlar, sonra C ürünü işlemleri (KB-503), sonra yüksek değerli müşteriler (KB-407), en son diğerleri."
+ },
+ {
+  "chunk_id": "07_inceleme_ve_eskalasyon#1",
+  "doc_id": "07_inceleme_ve_eskalasyon",
+  "title": "İnceleme ve Eskalasyon Prosedürü",
+  "section": "Eskalasyon",
+  "part": 0,
+  "rule_ids": [
+   "KB-704",
+   "KB-705",
+   "KB-706"
+  ],
+  "text": "İnceleme ve Eskalasyon Prosedürü › Eskalasyon\nKB-704: Aynı kullanıcı (uid) için 24 saat içinde 2 veya daha fazla REVIEW kararı oluşursa vaka seviye-2 fraud ekibine eskale edilir.\n\nKB-705: Fraud olduğu doğrulanan her vakada aynı cihazı veya aynı kart grubunu (card1) kullanan diğer kullanıcılar 7 gün süreyle izleme listesine alınır.\n\nKB-706: (Deneme kuralı) Seviye-2 ekibi, BLOCK edilen işlemin kart sahibine 30 dakika içinde ulaşamazsa kartı kalıcı olarak kapatır ve yeni kart basım sürecini başlatır."
+ },
+ {
+  "chunk_id": "07_inceleme_ve_eskalasyon#2",
+  "doc_id": "07_inceleme_ve_eskalasyon",
+  "title": "İnceleme ve Eskalasyon Prosedürü",
+  "section": "Geri bildirim döngüsü",
+  "part": 0,
+  "rule_ids": [
+   "KB-707"
+  ],
+  "text": "İnceleme ve Eskalasyon Prosedürü › Geri bildirim döngüsü\nKB-707: Analist kararları ve chargeback bildirimleri haftalık olarak toplanır. Context çarpanları ve kural eşikleri aylık olarak bu verilerle yeniden kalibre edilir. Ağırlık ve çarpan değişiklikleri yalnızca kalibrasyon döneminde belirlenir ve ayrı bir test döneminde doğrulanmadan canlıya alınmaz."
+ },
+ {
+  "chunk_id": "08_aciklanabilirlik_ve_veri_gizliligi#0",
+  "doc_id": "08_aciklanabilirlik_ve_veri_gizliligi",
+  "title": "Açıklanabilirlik ve Veri Gizliliği Politikası",
+  "section": "Açıklanabilirlik",
+  "part": 0,
+  "rule_ids": [
+   "KB-104",
+   "KB-801",
+   "KB-802",
+   "KB-803"
+  ],
+  "text": "Açıklanabilirlik ve Veri Gizliliği Politikası › Açıklanabilirlik\nKB-801: Otomatik olarak verilen her BLOCK ve REVIEW kararı insan tarafından okunabilir bir gerekçe içermelidir. Gerekçe; kararı veren kuralı, kuralın kanıt alanlarını (ör. tutar, saat, işlem sayısı) ve AI skorunun baskın katmanını içerir.\n\nKB-802: AI modeli tek başına BLOCK kararı veremez. AI skoru yalnızca REVIEW kararı üretebilir (KB-104); BLOCK kararları yalnızca açıkça tanımlanmış iş kurallarıyla verilir.\n\nKB-803: LLM tarafından üretilen değerlendirmeler yalnızca bilgi tabanındaki politika maddelerine atıf yapabilir. Kaynakta olmayan bir politika kimliğine atıf yapılırsa değerlendirme \"doğrulanmamış\" olarak işaretlenir ve analistin kararına esas alınmaz."
+ },
+ {
+  "chunk_id": "08_aciklanabilirlik_ve_veri_gizliligi#1",
+  "doc_id": "08_aciklanabilirlik_ve_veri_gizliligi",
+  "title": "Açıklanabilirlik ve Veri Gizliliği Politikası",
+  "section": "Veri gizliliği",
+  "part": 0,
+  "rule_ids": [
+   "KB-804",
+   "KB-805",
+   "KB-806"
+  ],
+  "text": "Açıklanabilirlik ve Veri Gizliliği Politikası › Veri gizliliği\nKB-804: Analist ekranında ve LLM'e gönderilen bağlamda kart numarası, isim veya tam adres gibi kişisel veriler yer almaz. Yalnızca kodlanmış alanlar (card1, addr1, e-posta alan adı) ve türetilmiş özellikler kullanılır.\n\nKB-805: LLM çağrıları yalnızca kurum içinde çalışan local modellerle (ör. Ollama) yapılır. İşlem verisi harici LLM servislerine gönderilmez.\n\nKB-806: Model kararları ve açıklamaları 10 yıl süreyle denetim kaydında saklanır."
+ }
+]
